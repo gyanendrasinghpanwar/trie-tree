@@ -1,0 +1,127 @@
+#include<iostream>
+#include<vector>
+using namespace std;
+
+const int CASE ='a';
+
+struct node
+{
+	node* parent_ =nullptr;
+	node* children_[26]={};  //initializing array with null
+	int occurrences_=0;
+};
+
+void insertnode(node* trietree, char* word)
+{
+	node* currentnode = trietree;
+
+	while(*word != '\0')
+	{
+		if(currentnode->children_[*word-CASE] ==nullptr)
+		{
+			currentnode->children_[*word-CASE]=new node(); //allocating memory to currentnode->children_ of data type node
+			currentnode->children_[*word-CASE]->parent_=currentnode;  //parent keeping the address of its parent node
+		}
+		currentnode=currentnode->children_[*word-CASE];   //now current node has address of element at which we are
+		++word;  //increaing the word
+	}
+	++currentnode->occurrences_; //when we are at last element we set value of occurrences to 1
+}
+
+node* search(node* trietree,char* word)
+{
+	while(*word!='\0')
+	{
+		if(trietree->children_[*word-'a']!=nullptr)
+		{
+			trietree=trietree->children_[*word-'a'];
+			++word;
+		}
+		else return nullptr;
+	}
+
+	if(trietree->occurrences_!=0)
+	return trietree;
+	else
+	return nullptr;
+}
+
+/*delete the node if
+   it has no children && its occurences is 0 and move to parent node and repeat */
+
+void deletenode(node* trietree,char* word)
+{
+	node* currentnode= search(trietree,word);
+	if(currentnode != nullptr)
+	{
+		--currentnode->occurrences_;
+		node* parent=nullptr;
+		bool isleaf=true;
+
+		for(int i=0;i<26;i++)
+		{
+			if(currentnode->children_[i]!=nullptr)
+			{
+				isleaf=false;
+				break;
+			}
+		}
+
+		while(currentnode->parent_!=nullptr && isleaf && currentnode->occurrences_==0)
+		{
+			parent=currentnode->parent_;
+			for(int i=0;i<26;i++)
+			{
+				if(parent->children_[i]==currentnode)
+				{
+					parent->children_[i]=nullptr;
+					delete currentnode;
+					currentnode=parent;
+				}
+				else if(parent->children_[i]!=nullptr)
+				{
+					isleaf=false;
+					break;
+				}
+			}
+		}
+	}
+}
+
+void preorderprint(node* trietree,vector<char> word)
+{
+	if(trietree->occurrences_>0)
+	{
+		for(auto it=word.begin();it!=word.end();++ it)
+		{
+			cout<<*it;
+		}
+		cout<<" "<<trietree->occurrences_<<endl;
+	}
+	for(int i=0;i<26;i++)
+	{
+		if(trietree->children_[i]!=nullptr)   //finding child which is not null or exist
+		{
+			word.push_back(CASE+i);
+			preorderprint(trietree->children_[i],word);
+			word.pop_back();
+		}
+	}
+}
+
+int main()
+{
+    vector<char> word;
+
+	node* trietree =new node();
+	insertnode(trietree,"abba");
+	insertnode(trietree,"abs");
+	insertnode(trietree,"cat");
+	insertnode(trietree,"catch");
+	insertnode(trietree,"abba");
+
+	deletenode(trietree,"abba");
+	deletenode(trietree,"cat");
+
+	preorderprint(trietree,word);
+}
